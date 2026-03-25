@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
@@ -13,6 +14,15 @@ import { ParcelaCard } from "@/components/parcela-card"
 import { ParcelaForm } from "@/components/parcela-form"
 import { ImportExportPanel } from "@/components/import-export-panel"
 import { MetricsPanel } from "@/components/metrics-panel"
+
+const ParcelasMap = dynamic(() => import("@/components/parcelas-map").then((mod) => mod.ParcelasMap), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[500px] bg-card rounded-xl border-2 border-border">
+      <p className="text-lg text-muted-foreground">Cargando mapa...</p>
+    </div>
+  ),
+})
 import {
   Plus,
   LogOut,
@@ -21,6 +31,7 @@ import {
   Search,
   LayoutGrid,
   BarChart3,
+  MapPinned,
 } from "lucide-react"
 
 interface DashboardContentProps {
@@ -207,6 +218,13 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
               <BarChart3 className="w-5 h-5" />
               Métricas
             </TabsTrigger>
+            <TabsTrigger
+              value="mapa"
+              className="h-12 px-6 text-base font-semibold gap-2 rounded-lg data-[state=active]:shadow-md transition-all"
+            >
+              <MapPinned className="w-5 h-5" />
+              Mapa
+            </TabsTrigger>
           </TabsList>
 
           {/* Parcelas Tab */}
@@ -280,6 +298,11 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
           {/* Métricas Tab */}
           <TabsContent value="metricas">
             <MetricsPanel parcelas={parcelas} />
+          </TabsContent>
+
+          {/* Mapa Tab */}
+          <TabsContent value="mapa">
+            <ParcelasMap parcelas={parcelas} />
           </TabsContent>
         </Tabs>
       </main>
