@@ -41,6 +41,8 @@ export function buildSigpacUrl(params: {
   const searchParams = new URLSearchParams({
     provincia: provincia.toString(),
     municipio: codMunicipio.toString(),
+    agregado: "0",
+    zona: "0",
     poligono: params.pol.toString(),
     parcela: params.par.toString(),
   })
