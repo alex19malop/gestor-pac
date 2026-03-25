@@ -14,7 +14,6 @@ import { ParcelaForm } from "@/components/parcela-form"
 import { ImportExportPanel } from "@/components/import-export-panel"
 import { MetricsPanel } from "@/components/metrics-panel"
 import {
-  Sprout,
   Plus,
   LogOut,
   FileSpreadsheet,
@@ -104,8 +103,12 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <Sprout className="w-6 h-6 text-primary-foreground" />
+              <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg shadow-primary/20 ring-2 ring-primary/20">
+                <img
+                  src="/hija.jpeg"
+                  alt="Foto familiar"
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Gestor PAC</h1>
@@ -243,7 +246,7 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
             {filteredParcelas.length === 0 ? (
               <Card className="border-2 border-dashed border-border">
                 <CardContent className="py-12 text-center">
-                  <Sprout className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <LayoutGrid className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                   <p className="text-xl text-muted-foreground mb-4">
                     {searchQuery
                       ? "No se encontraron parcelas con esa búsqueda"

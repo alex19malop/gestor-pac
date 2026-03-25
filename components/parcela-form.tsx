@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
-import { MapPin, Grid3X3, Ruler, Wheat, StickyNote } from "lucide-react"
+import {
+  MapPin,
+  Wheat,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+} from "lucide-react"
 
 interface ParcelaFormProps {
   userId: string
@@ -17,21 +23,14 @@ interface ParcelaFormProps {
   onCancel: () => void
 }
 
-function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
-  return (
-    <div className="flex items-center gap-3 pb-2 mb-1 border-b border-border/60">
-      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-        {icon}
-      </div>
-      <div>
-        <h3 className="text-lg font-bold text-foreground">{title}</h3>
-        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-      </div>
-    </div>
-  )
-}
+const STEPS = [
+  { id: 0, label: "Ubicación", icon: MapPin },
+  { id: 1, label: "Cultivos", icon: Wheat },
+  { id: 2, label: "Confirmar", icon: Check },
+] as const
 
 export function ParcelaForm({ userId, parcela, onSuccess, onCancel }: ParcelaFormProps) {
+  const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
@@ -60,8 +59,7 @@ export function ParcelaForm({ userId, parcela, onSuccess, onCancel }: ParcelaFor
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     setLoading(true)
     setError(null)
 
@@ -104,275 +102,335 @@ export function ParcelaForm({ userId, parcela, onSuccess, onCancel }: ParcelaFor
     }
   }
 
+  const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1))
+  const prev = () => setStep((s) => Math.max(s - 1, 0))
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Section 1: Location */}
-      <section className="space-y-4">
-        <SectionHeader
-          icon={<MapPin className="w-5 h-5" />}
-          title="Ubicación"
-          subtitle="Nombre y localización de la parcela"
-        />
-        <FieldGroup>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Nombre de Parcela
-              </FieldLabel>
-              <Input
-                name="nombre_parcela"
-                value={formData.nombre_parcela}
-                onChange={handleChange}
-                placeholder="Ej: Finca Norte"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">Municipio</FieldLabel>
-              <Input
-                name="municipio"
-                value={formData.municipio}
-                onChange={handleChange}
-                placeholder="Ej: 42033 ALMAZUL"
-                className="h-14 text-lg px-4 border-2"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Formato: código + nombre (ej: 42033 ALMAZUL)
-              </p>
-            </Field>
+    <div className="space-y-6">
+      {/* Progress Steps */}
+      <div className="flex items-center gap-1">
+        {STEPS.map((s, i) => {
+          const Icon = s.icon
+          const isActive = step === i
+          const isDone = step > i
+          return (
+            <div key={s.id} className="flex items-center flex-1">
+              <button
+                type="button"
+                onClick={() => setStep(i)}
+                className={`
+                  flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
+                  ${isActive
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                    : isDone
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground"
+                  }
+                `}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{s.label}</span>
+              </button>
+              {i < STEPS.length - 1 && (
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 mx-1" />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Step Content */}
+      <div className="min-h-[280px]">
+        {/* Step 1: Ubicación + Referencia + Superficies */}
+        {step === 0 && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-200">
+            <FieldGroup>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel className="text-base font-semibold">
+                    Nombre de Parcela
+                  </FieldLabel>
+                  <Input
+                    name="nombre_parcela"
+                    value={formData.nombre_parcela}
+                    onChange={handleChange}
+                    placeholder="Ej: Finca Norte"
+                    className="h-12 text-base px-4 border-2"
+                    autoFocus
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Municipio</FieldLabel>
+                  <Input
+                    name="municipio"
+                    value={formData.municipio}
+                    onChange={handleChange}
+                    placeholder="Ej: 42033 ALMAZUL"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Código + nombre (ej: 42033 ALMAZUL)
+                  </p>
+                </Field>
+              </div>
+
+              <div className="grid gap-4 grid-cols-3">
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Polígono</FieldLabel>
+                  <Input
+                    name="pol"
+                    type="number"
+                    value={formData.pol}
+                    onChange={handleChange}
+                    placeholder="Pol"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Parcela</FieldLabel>
+                  <Input
+                    name="par"
+                    type="number"
+                    value={formData.par}
+                    onChange={handleChange}
+                    placeholder="Par"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Recinto</FieldLabel>
+                  <Input
+                    name="rec"
+                    type="number"
+                    value={formData.rec}
+                    onChange={handleChange}
+                    placeholder="Rec"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid gap-4 grid-cols-3">
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Sup. Total (ha)</FieldLabel>
+                  <Input
+                    name="sup_total"
+                    type="number"
+                    step="0.01"
+                    value={formData.sup_total}
+                    onChange={handleChange}
+                    placeholder="5.25"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Sup. SRR (ha)</FieldLabel>
+                  <Input
+                    name="sup_srr"
+                    type="number"
+                    step="0.01"
+                    value={formData.sup_srr}
+                    onChange={handleChange}
+                    placeholder="4.80"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">SR</FieldLabel>
+                  <Input
+                    name="sr"
+                    value={formData.sr}
+                    onChange={handleChange}
+                    placeholder="SIGPAC"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+              </div>
+            </FieldGroup>
           </div>
-        </FieldGroup>
-      </section>
+        )}
 
-      {/* Section 2: SIGPAC Reference */}
-      <section className="space-y-4">
-        <SectionHeader
-          icon={<Grid3X3 className="w-5 h-5" />}
-          title="Referencia SIGPAC"
-          subtitle="Polígono, parcela y recinto del SIGPAC"
-        />
-        <FieldGroup>
-          <div className="grid gap-4 grid-cols-3">
-            <Field>
-              <FieldLabel className="text-lg font-semibold">Polígono</FieldLabel>
-              <Input
-                name="pol"
-                type="number"
-                value={formData.pol}
-                onChange={handleChange}
-                placeholder="Pol"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">Parcela</FieldLabel>
-              <Input
-                name="par"
-                type="number"
-                value={formData.par}
-                onChange={handleChange}
-                placeholder="Par"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">Recinto</FieldLabel>
-              <Input
-                name="rec"
-                type="number"
-                value={formData.rec}
-                onChange={handleChange}
-                placeholder="Rec"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
+        {/* Step 2: Cultivos + Laboreo + Notas */}
+        {step === 1 && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-200">
+            <FieldGroup>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Campaña Anterior</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Cultivo Anterior</FieldLabel>
+                  <Input
+                    name="cultivo_anterior"
+                    value={formData.cultivo_anterior}
+                    onChange={handleChange}
+                    placeholder="Ej: Trigo"
+                    className="h-12 text-base px-4 border-2"
+                    autoFocus
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Laboreo Anterior</FieldLabel>
+                  <Input
+                    name="lab_anterior"
+                    value={formData.lab_anterior}
+                    onChange={handleChange}
+                    placeholder="Ej: Siembra directa"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+              </div>
+
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-2">Campaña Actual</p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Cultivo Actual</FieldLabel>
+                  <Input
+                    name="cultivo_actual"
+                    value={formData.cultivo_actual}
+                    onChange={handleChange}
+                    placeholder="Ej: Cebada"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Variedad</FieldLabel>
+                  <Input
+                    name="variedad"
+                    value={formData.variedad}
+                    onChange={handleChange}
+                    placeholder="Ej: Hispánica"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel className="text-base font-semibold">Laboreo Actual</FieldLabel>
+                  <Input
+                    name="laboreo_actual"
+                    value={formData.laboreo_actual}
+                    onChange={handleChange}
+                    placeholder="Ej: Tradicional"
+                    className="h-12 text-base px-4 border-2"
+                  />
+                </Field>
+              </div>
+
+              <Field>
+                <FieldLabel className="text-base font-semibold">Notas</FieldLabel>
+                <Textarea
+                  name="notas"
+                  value={formData.notas}
+                  onChange={handleChange}
+                  placeholder="Observaciones adicionales..."
+                  rows={2}
+                  className="text-base px-4 py-3 border-2"
+                />
+              </Field>
+            </FieldGroup>
           </div>
-        </FieldGroup>
-      </section>
+        )}
 
-      {/* Section 3: Surfaces */}
-      <section className="space-y-4">
-        <SectionHeader
-          icon={<Ruler className="w-5 h-5" />}
-          title="Superficies"
-          subtitle="Medidas en hectáreas"
-        />
-        <FieldGroup>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Sup. Total (ha)
-              </FieldLabel>
-              <Input
-                name="sup_total"
-                type="number"
-                step="0.01"
-                value={formData.sup_total}
-                onChange={handleChange}
-                placeholder="Ej: 5.25"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Sup. SRR (ha)
-              </FieldLabel>
-              <Input
-                name="sup_srr"
-                type="number"
-                step="0.01"
-                value={formData.sup_srr}
-                onChange={handleChange}
-                placeholder="Ej: 4.80"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Sistema Ref. (SR)
-              </FieldLabel>
-              <Input
-                name="sr"
-                value={formData.sr}
-                onChange={handleChange}
-                placeholder="Ej: SIGPAC"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
+        {/* Step 3: Resumen */}
+        {step === 2 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+            <p className="text-sm text-muted-foreground mb-3">Revisa los datos antes de guardar:</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SummaryItem label="Nombre" value={formData.nombre_parcela} />
+              <SummaryItem label="Municipio" value={formData.municipio} />
+              <SummaryItem label="Polígono" value={formData.pol} />
+              <SummaryItem label="Parcela" value={formData.par} />
+              <SummaryItem label="Recinto" value={formData.rec} />
+              <SummaryItem label="Sup. Total" value={formData.sup_total ? `${formData.sup_total} ha` : ""} />
+              <SummaryItem label="Sup. SRR" value={formData.sup_srr ? `${formData.sup_srr} ha` : ""} />
+              <SummaryItem label="SR" value={formData.sr} />
+              <SummaryItem label="Cultivo Anterior" value={formData.cultivo_anterior} />
+              <SummaryItem label="Lab. Anterior" value={formData.lab_anterior} />
+              <SummaryItem label="Cultivo Actual" value={formData.cultivo_actual} />
+              <SummaryItem label="Variedad" value={formData.variedad} />
+              <SummaryItem label="Laboreo Actual" value={formData.laboreo_actual} />
+            </div>
+            {formData.notas && (
+              <div className="p-3 bg-muted rounded-xl text-sm">
+                <span className="text-muted-foreground font-medium">Notas: </span>
+                <span className="italic">{formData.notas}</span>
+              </div>
+            )}
           </div>
-        </FieldGroup>
-      </section>
+        )}
+      </div>
 
-      {/* Section 4: Crops & Laboreo */}
-      <section className="space-y-4">
-        <SectionHeader
-          icon={<Wheat className="w-5 h-5" />}
-          title="Cultivos y Laboreo"
-          subtitle="Información de la campaña anterior y actual"
-        />
-        <FieldGroup>
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Campaña Anterior</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Cultivo Anterior
-              </FieldLabel>
-              <Input
-                name="cultivo_anterior"
-                value={formData.cultivo_anterior}
-                onChange={handleChange}
-                placeholder="Ej: Trigo"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Laboreo Anterior
-              </FieldLabel>
-              <Input
-                name="lab_anterior"
-                value={formData.lab_anterior}
-                onChange={handleChange}
-                placeholder="Ej: Siembra directa"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-          </div>
-
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mt-4">Campaña Actual</p>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Cultivo Actual
-              </FieldLabel>
-              <Input
-                name="cultivo_actual"
-                value={formData.cultivo_actual}
-                onChange={handleChange}
-                placeholder="Ej: Cebada"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">Variedad</FieldLabel>
-              <Input
-                name="variedad"
-                value={formData.variedad}
-                onChange={handleChange}
-                placeholder="Ej: Hispánica"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-            <Field>
-              <FieldLabel className="text-lg font-semibold">
-                Laboreo Actual
-              </FieldLabel>
-              <Input
-                name="laboreo_actual"
-                value={formData.laboreo_actual}
-                onChange={handleChange}
-                placeholder="Ej: Laboreo tradicional"
-                className="h-14 text-lg px-4 border-2"
-              />
-            </Field>
-          </div>
-        </FieldGroup>
-      </section>
-
-      {/* Section 5: Notes */}
-      <section className="space-y-4">
-        <SectionHeader
-          icon={<StickyNote className="w-5 h-5" />}
-          title="Notas"
-          subtitle="Observaciones adicionales"
-        />
-        <FieldGroup>
-          <Field>
-            <Textarea
-              name="notas"
-              value={formData.notas}
-              onChange={handleChange}
-              placeholder="Cualquier observación relevante sobre la parcela..."
-              rows={3}
-              className="text-lg px-4 py-3 border-2"
-            />
-          </Field>
-        </FieldGroup>
-      </section>
-
+      {/* Error */}
       {error && (
-        <div className="p-4 bg-destructive/10 border-2 border-destructive rounded-lg animate-in shake duration-300">
-          <p className="text-lg text-destructive font-medium">{error}</p>
+        <div className="p-3 bg-destructive/10 border-2 border-destructive rounded-lg">
+          <p className="text-base text-destructive font-medium">{error}</p>
         </div>
       )}
 
-      <div className="flex gap-4 sticky bottom-0 bg-card py-4 -mx-6 px-6 border-t border-border">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          className="flex-1 h-14 text-lg font-bold border-2"
-          disabled={loading}
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          className="flex-1 h-14 text-lg font-bold shadow-lg shadow-primary/20"
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <Spinner className="mr-2" />
-              Guardando...
-            </>
-          ) : parcela ? (
-            "Guardar Cambios"
-          ) : (
-            "Crear Parcela"
-          )}
-        </Button>
+      {/* Navigation */}
+      <div className="flex gap-3 pt-2 border-t border-border">
+        {step === 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1 h-13 text-base font-bold border-2"
+          >
+            Cancelar
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={prev}
+            className="flex-1 h-13 text-base font-bold border-2"
+          >
+            <ChevronLeft className="w-5 h-5 mr-1" />
+            Atrás
+          </Button>
+        )}
+
+        {step < STEPS.length - 1 ? (
+          <Button
+            type="button"
+            onClick={next}
+            className="flex-1 h-13 text-base font-bold shadow-lg shadow-primary/20"
+          >
+            Siguiente
+            <ChevronRight className="w-5 h-5 ml-1" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            className="flex-1 h-13 text-base font-bold shadow-lg shadow-primary/20"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Spinner className="mr-2" />
+                Guardando...
+              </>
+            ) : parcela ? (
+              <>
+                <Check className="w-5 h-5 mr-1" />
+                Guardar Cambios
+              </>
+            ) : (
+              <>
+                <Check className="w-5 h-5 mr-1" />
+                Crear Parcela
+              </>
+            )}
+          </Button>
+        )}
       </div>
-    </form>
+    </div>
+  )
+}
+
+function SummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline gap-2 px-3 py-2 bg-muted/60 rounded-lg text-sm">
+      <span className="text-muted-foreground font-medium shrink-0">{label}:</span>
+      <span className="font-semibold truncate">{value || "—"}</span>
+    </div>
   )
 }
