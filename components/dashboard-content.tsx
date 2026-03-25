@@ -1,16 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import type { Parcela } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ParcelaCard } from "@/components/parcela-card"
 import { ParcelaForm } from "@/components/parcela-form"
 import { ImportExportPanel } from "@/components/import-export-panel"
-import { Sprout, Plus, LogOut, FileSpreadsheet, X } from "lucide-react"
+import { MetricsPanel } from "@/components/metrics-panel"
+import {
+  Sprout,
+  Plus,
+  LogOut,
+  FileSpreadsheet,
+  X,
+  Search,
+  LayoutGrid,
+  BarChart3,
+} from "lucide-react"
 
 interface DashboardContentProps {
   user: User
@@ -22,6 +34,7 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
   const [showForm, setShowForm] = useState(false)
   const [editingParcela, setEditingParcela] = useState<Parcela | null>(null)
   const [showImportExport, setShowImportExport] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
   const supabase = createClient()
 
@@ -64,14 +77,34 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
     refreshParcelas()
   }
 
+  // --- Search filtering ---
+  const filteredParcelas = useMemo(() => {
+    if (!searchQuery.trim()) return parcelas
+    const q = searchQuery.toLowerCase().trim()
+    return parcelas.filter((p) => {
+      const fields = [
+        p.nombre_parcela,
+        p.municipio,
+        p.cultivo_actual,
+        p.cultivo_anterior,
+        p.variedad,
+        p.laboreo_actual,
+        p.notas,
+        p.pol?.toString(),
+        p.par?.toString(),
+      ]
+      return fields.some((f) => f?.toLowerCase().includes(q))
+    })
+  }, [parcelas, searchQuery])
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-card border-b-2 border-border sticky top-0 z-10">
+      <header className="bg-card/80 backdrop-blur-lg border-b-2 border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
                 <Sprout className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
@@ -84,7 +117,7 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="h-12 px-4 text-lg font-semibold border-2"
+              className="h-12 px-4 text-lg font-semibold border-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all duration-200"
             >
               <LogOut className="w-5 h-5 mr-2" />
               Salir
@@ -99,7 +132,7 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
         <div className="flex flex-wrap gap-4 mb-6">
           <Button
             onClick={() => setShowForm(true)}
-            className="h-16 px-6 text-xl font-bold flex-1 min-w-[200px]"
+            className="h-16 px-6 text-xl font-bold flex-1 min-w-[200px] shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
           >
             <Plus className="w-6 h-6 mr-2" />
             Nueva Parcela
@@ -107,7 +140,7 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
           <Button
             variant="secondary"
             onClick={() => setShowImportExport(!showImportExport)}
-            className="h-16 px-6 text-xl font-bold flex-1 min-w-[200px] border-2 border-border"
+            className="h-16 px-6 text-xl font-bold flex-1 min-w-[200px] border-2 border-border hover:border-primary/30 transition-all duration-300"
           >
             <FileSpreadsheet className="w-6 h-6 mr-2" />
             {showImportExport ? "Ocultar" : "Importar / Exportar"}
@@ -116,17 +149,19 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
 
         {/* Import/Export Panel */}
         {showImportExport && (
-          <ImportExportPanel
-            parcelas={parcelas}
-            userId={user.id}
-            onImportSuccess={refreshParcelas}
-          />
+          <div className="animate-in slide-in-from-top-2 duration-300">
+            <ImportExportPanel
+              parcelas={parcelas}
+              userId={user.id}
+              onImportSuccess={refreshParcelas}
+            />
+          </div>
         )}
 
         {/* Parcela Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto p-4">
-            <Card className="w-full max-w-2xl my-8 border-2 border-border">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto p-4">
+            <Card className="w-full max-w-2xl my-8 border-2 border-border shadow-2xl animate-in zoom-in-95 duration-200">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-2xl font-bold">
                   {editingParcela ? "Editar Parcela" : "Nueva Parcela"}
@@ -135,7 +170,7 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
                   variant="ghost"
                   size="icon"
                   onClick={handleFormClose}
-                  className="h-12 w-12"
+                  className="h-12 w-12 hover:bg-destructive/10 hover:text-destructive transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </Button>
@@ -152,41 +187,98 @@ export function DashboardContent({ user, initialParcelas }: DashboardContentProp
           </div>
         )}
 
-        {/* Parcelas List */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-foreground">
-            Mis Parcelas ({parcelas.length})
-          </h2>
+        {/* Tabs: Parcelas / Métricas */}
+        <Tabs defaultValue="parcelas" className="space-y-6">
+          <TabsList className="h-14 p-1 bg-muted/80 rounded-xl w-full sm:w-auto">
+            <TabsTrigger
+              value="parcelas"
+              className="h-12 px-6 text-base font-semibold gap-2 rounded-lg data-[state=active]:shadow-md transition-all"
+            >
+              <LayoutGrid className="w-5 h-5" />
+              Parcelas
+            </TabsTrigger>
+            <TabsTrigger
+              value="metricas"
+              className="h-12 px-6 text-base font-semibold gap-2 rounded-lg data-[state=active]:shadow-md transition-all"
+            >
+              <BarChart3 className="w-5 h-5" />
+              Métricas
+            </TabsTrigger>
+          </TabsList>
 
-          {parcelas.length === 0 ? (
-            <Card className="border-2 border-dashed border-border">
-              <CardContent className="py-12 text-center">
-                <Sprout className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-xl text-muted-foreground mb-4">
-                  No tiene parcelas registradas
-                </p>
+          {/* Parcelas Tab */}
+          <TabsContent value="parcelas" className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar por nombre, municipio, cultivo, polígono..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-14 pl-12 pr-4 text-lg border-2 rounded-xl bg-card focus:border-primary transition-colors"
+              />
+              {searchQuery && (
                 <Button
-                  onClick={() => setShowForm(true)}
-                  className="h-14 px-6 text-lg font-bold"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Añadir Primera Parcela
+                  <X className="w-4 h-4" />
                 </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {parcelas.map((parcela) => (
-                <ParcelaCard
-                  key={parcela.id}
-                  parcela={parcela}
-                  onEdit={() => handleEdit(parcela)}
-                  onDelete={() => handleDelete(parcela.id)}
-                />
-              ))}
+              )}
             </div>
-          )}
-        </div>
+
+            {/* Results count */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-foreground">
+                {searchQuery
+                  ? `${filteredParcelas.length} de ${parcelas.length} parcelas`
+                  : `Mis Parcelas (${parcelas.length})`}
+              </h2>
+            </div>
+
+            {/* Parcelas Grid */}
+            {filteredParcelas.length === 0 ? (
+              <Card className="border-2 border-dashed border-border">
+                <CardContent className="py-12 text-center">
+                  <Sprout className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    {searchQuery
+                      ? "No se encontraron parcelas con esa búsqueda"
+                      : "No tiene parcelas registradas"}
+                  </p>
+                  {!searchQuery && (
+                    <Button
+                      onClick={() => setShowForm(true)}
+                      className="h-14 px-6 text-lg font-bold shadow-lg shadow-primary/20"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Añadir Primera Parcela
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredParcelas.map((parcela) => (
+                  <ParcelaCard
+                    key={parcela.id}
+                    parcela={parcela}
+                    onEdit={() => handleEdit(parcela)}
+                    onDelete={() => handleDelete(parcela.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Métricas Tab */}
+          <TabsContent value="metricas">
+            <MetricsPanel parcelas={parcelas} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )

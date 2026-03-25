@@ -8,12 +8,27 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
+import { MapPin, Grid3X3, Ruler, Wheat, StickyNote } from "lucide-react"
 
 interface ParcelaFormProps {
   userId: string
   parcela?: Parcela | null
   onSuccess: () => void
   onCancel: () => void
+}
+
+function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) {
+  return (
+    <div className="flex items-center gap-3 pb-2 mb-1 border-b border-border/60">
+      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+        {icon}
+      </div>
+      <div>
+        <h3 className="text-lg font-bold text-foreground">{title}</h3>
+        {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+      </div>
+    </div>
+  )
 }
 
 export function ParcelaForm({ userId, parcela, onSuccess, onCancel }: ParcelaFormProps) {
@@ -90,204 +105,248 @@ export function ParcelaForm({ userId, parcela, onSuccess, onCancel }: ParcelaFor
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <FieldGroup>
-        {/* Basic Info */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel className="text-lg font-semibold">
-              Nombre de Parcela
-            </FieldLabel>
-            <Input
-              name="nombre_parcela"
-              value={formData.nombre_parcela}
-              onChange={handleChange}
-              placeholder="Ej: Finca Norte"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-          <Field>
-            <FieldLabel className="text-lg font-semibold">Municipio</FieldLabel>
-            <Input
-              name="municipio"
-              value={formData.municipio}
-              onChange={handleChange}
-              placeholder="Ej: Villamayor"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Section 1: Location */}
+      <section className="space-y-4">
+        <SectionHeader
+          icon={<MapPin className="w-5 h-5" />}
+          title="Ubicación"
+          subtitle="Nombre y localización de la parcela"
+        />
+        <FieldGroup>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Nombre de Parcela
+              </FieldLabel>
+              <Input
+                name="nombre_parcela"
+                value={formData.nombre_parcela}
+                onChange={handleChange}
+                placeholder="Ej: Finca Norte"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">Municipio</FieldLabel>
+              <Input
+                name="municipio"
+                value={formData.municipio}
+                onChange={handleChange}
+                placeholder="Ej: 42033 ALMAZUL"
+                className="h-14 text-lg px-4 border-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Formato: código + nombre (ej: 42033 ALMAZUL)
+              </p>
+            </Field>
+          </div>
+        </FieldGroup>
+      </section>
 
-        {/* Reference Numbers */}
-        <div className="grid gap-4 grid-cols-3">
-          <Field>
-            <FieldLabel className="text-lg font-semibold">Polígono</FieldLabel>
-            <Input
-              name="pol"
-              type="number"
-              value={formData.pol}
-              onChange={handleChange}
-              placeholder="Pol"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-          <Field>
-            <FieldLabel className="text-lg font-semibold">Parcela</FieldLabel>
-            <Input
-              name="par"
-              type="number"
-              value={formData.par}
-              onChange={handleChange}
-              placeholder="Par"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-          <Field>
-            <FieldLabel className="text-lg font-semibold">Recinto</FieldLabel>
-            <Input
-              name="rec"
-              type="number"
-              value={formData.rec}
-              onChange={handleChange}
-              placeholder="Rec"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-        </div>
+      {/* Section 2: SIGPAC Reference */}
+      <section className="space-y-4">
+        <SectionHeader
+          icon={<Grid3X3 className="w-5 h-5" />}
+          title="Referencia SIGPAC"
+          subtitle="Polígono, parcela y recinto del SIGPAC"
+        />
+        <FieldGroup>
+          <div className="grid gap-4 grid-cols-3">
+            <Field>
+              <FieldLabel className="text-lg font-semibold">Polígono</FieldLabel>
+              <Input
+                name="pol"
+                type="number"
+                value={formData.pol}
+                onChange={handleChange}
+                placeholder="Pol"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">Parcela</FieldLabel>
+              <Input
+                name="par"
+                type="number"
+                value={formData.par}
+                onChange={handleChange}
+                placeholder="Par"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">Recinto</FieldLabel>
+              <Input
+                name="rec"
+                type="number"
+                value={formData.rec}
+                onChange={handleChange}
+                placeholder="Rec"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+          </div>
+        </FieldGroup>
+      </section>
 
-        {/* Surfaces */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel className="text-lg font-semibold">
-              Superficie Total (ha)
-            </FieldLabel>
-            <Input
-              name="sup_total"
-              type="number"
-              step="0.01"
-              value={formData.sup_total}
-              onChange={handleChange}
-              placeholder="Ej: 5.25"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-          <Field>
-            <FieldLabel className="text-lg font-semibold">
-              Superficie SRR (ha)
-            </FieldLabel>
-            <Input
-              name="sup_srr"
-              type="number"
-              step="0.01"
-              value={formData.sup_srr}
-              onChange={handleChange}
-              placeholder="Ej: 4.80"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-        </div>
+      {/* Section 3: Surfaces */}
+      <section className="space-y-4">
+        <SectionHeader
+          icon={<Ruler className="w-5 h-5" />}
+          title="Superficies"
+          subtitle="Medidas en hectáreas"
+        />
+        <FieldGroup>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Sup. Total (ha)
+              </FieldLabel>
+              <Input
+                name="sup_total"
+                type="number"
+                step="0.01"
+                value={formData.sup_total}
+                onChange={handleChange}
+                placeholder="Ej: 5.25"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Sup. SRR (ha)
+              </FieldLabel>
+              <Input
+                name="sup_srr"
+                type="number"
+                step="0.01"
+                value={formData.sup_srr}
+                onChange={handleChange}
+                placeholder="Ej: 4.80"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Sistema Ref. (SR)
+              </FieldLabel>
+              <Input
+                name="sr"
+                value={formData.sr}
+                onChange={handleChange}
+                placeholder="Ej: SIGPAC"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+          </div>
+        </FieldGroup>
+      </section>
 
-        {/* SR */}
-        <Field>
-          <FieldLabel className="text-lg font-semibold">
-            Sistema de Referencia (SR)
-          </FieldLabel>
-          <Input
-            name="sr"
-            value={formData.sr}
-            onChange={handleChange}
-            placeholder="Ej: SIGPAC"
-            className="h-14 text-lg px-4 border-2"
-          />
-        </Field>
+      {/* Section 4: Crops & Laboreo */}
+      <section className="space-y-4">
+        <SectionHeader
+          icon={<Wheat className="w-5 h-5" />}
+          title="Cultivos y Laboreo"
+          subtitle="Información de la campaña anterior y actual"
+        />
+        <FieldGroup>
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Campaña Anterior</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Cultivo Anterior
+              </FieldLabel>
+              <Input
+                name="cultivo_anterior"
+                value={formData.cultivo_anterior}
+                onChange={handleChange}
+                placeholder="Ej: Trigo"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Laboreo Anterior
+              </FieldLabel>
+              <Input
+                name="lab_anterior"
+                value={formData.lab_anterior}
+                onChange={handleChange}
+                placeholder="Ej: Siembra directa"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+          </div>
 
-        {/* Crops */}
-        <div className="grid gap-4 sm:grid-cols-2">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mt-4">Campaña Actual</p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Cultivo Actual
+              </FieldLabel>
+              <Input
+                name="cultivo_actual"
+                value={formData.cultivo_actual}
+                onChange={handleChange}
+                placeholder="Ej: Cebada"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">Variedad</FieldLabel>
+              <Input
+                name="variedad"
+                value={formData.variedad}
+                onChange={handleChange}
+                placeholder="Ej: Hispánica"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+            <Field>
+              <FieldLabel className="text-lg font-semibold">
+                Laboreo Actual
+              </FieldLabel>
+              <Input
+                name="laboreo_actual"
+                value={formData.laboreo_actual}
+                onChange={handleChange}
+                placeholder="Ej: Laboreo tradicional"
+                className="h-14 text-lg px-4 border-2"
+              />
+            </Field>
+          </div>
+        </FieldGroup>
+      </section>
+
+      {/* Section 5: Notes */}
+      <section className="space-y-4">
+        <SectionHeader
+          icon={<StickyNote className="w-5 h-5" />}
+          title="Notas"
+          subtitle="Observaciones adicionales"
+        />
+        <FieldGroup>
           <Field>
-            <FieldLabel className="text-lg font-semibold">
-              Cultivo Anterior
-            </FieldLabel>
-            <Input
-              name="cultivo_anterior"
-              value={formData.cultivo_anterior}
+            <Textarea
+              name="notas"
+              value={formData.notas}
               onChange={handleChange}
-              placeholder="Ej: Trigo"
-              className="h-14 text-lg px-4 border-2"
+              placeholder="Cualquier observación relevante sobre la parcela..."
+              rows={3}
+              className="text-lg px-4 py-3 border-2"
             />
           </Field>
-          <Field>
-            <FieldLabel className="text-lg font-semibold">
-              Laboreo Anterior
-            </FieldLabel>
-            <Input
-              name="lab_anterior"
-              value={formData.lab_anterior}
-              onChange={handleChange}
-              placeholder="Ej: Siembra directa"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel className="text-lg font-semibold">
-              Cultivo Actual
-            </FieldLabel>
-            <Input
-              name="cultivo_actual"
-              value={formData.cultivo_actual}
-              onChange={handleChange}
-              placeholder="Ej: Cebada"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-          <Field>
-            <FieldLabel className="text-lg font-semibold">Variedad</FieldLabel>
-            <Input
-              name="variedad"
-              value={formData.variedad}
-              onChange={handleChange}
-              placeholder="Ej: Hispánica"
-              className="h-14 text-lg px-4 border-2"
-            />
-          </Field>
-        </div>
-
-        <Field>
-          <FieldLabel className="text-lg font-semibold">
-            Laboreo Actual
-          </FieldLabel>
-          <Input
-            name="laboreo_actual"
-            value={formData.laboreo_actual}
-            onChange={handleChange}
-            placeholder="Ej: Laboreo tradicional"
-            className="h-14 text-lg px-4 border-2"
-          />
-        </Field>
-
-        {/* Notes */}
-        <Field>
-          <FieldLabel className="text-lg font-semibold">Notas</FieldLabel>
-          <Textarea
-            name="notas"
-            value={formData.notas}
-            onChange={handleChange}
-            placeholder="Observaciones adicionales..."
-            rows={3}
-            className="text-lg px-4 py-3 border-2"
-          />
-        </Field>
-      </FieldGroup>
+        </FieldGroup>
+      </section>
 
       {error && (
-        <div className="p-4 bg-destructive/10 border-2 border-destructive rounded-lg">
+        <div className="p-4 bg-destructive/10 border-2 border-destructive rounded-lg animate-in shake duration-300">
           <p className="text-lg text-destructive font-medium">{error}</p>
         </div>
       )}
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 sticky bottom-0 bg-card py-4 -mx-6 px-6 border-t border-border">
         <Button
           type="button"
           variant="outline"
@@ -299,7 +358,7 @@ export function ParcelaForm({ userId, parcela, onSuccess, onCancel }: ParcelaFor
         </Button>
         <Button
           type="submit"
-          className="flex-1 h-14 text-lg font-bold"
+          className="flex-1 h-14 text-lg font-bold shadow-lg shadow-primary/20"
           disabled={loading}
         >
           {loading ? (

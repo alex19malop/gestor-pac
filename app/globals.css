@@ -123,3 +123,54 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Smooth animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-slot="tabs-content"] {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Cards stagger animation */
+.grid > [class*="border-"] {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.grid > [class*="border-"]:nth-child(2) { animation-delay: 50ms; }
+.grid > [class*="border-"]:nth-child(3) { animation-delay: 100ms; }
+.grid > [class*="border-"]:nth-child(4) { animation-delay: 150ms; }
+.grid > [class*="border-"]:nth-child(5) { animation-delay: 200ms; }
+.grid > [class*="border-"]:nth-child(6) { animation-delay: 250ms; }
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles */
+input:focus-visible,
+textarea:focus-visible {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px oklch(0.45 0.15 145 / 0.15);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
